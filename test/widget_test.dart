@@ -41,17 +41,32 @@ import 'widget_test.mocks.dart';
 
 
 void main() async {
+
   MockHiveInterface mockHiveInterface = MockHiveInterface();
+  MockBox mockHiveBox = MockBox();
 
-  //Making a mock that still uses hive then arent I still using an actual database?
+  when(mockHiveInterface.openBox('taskList')).thenAnswer((_) async => mockHiveBox);
+  when(mockHiveInterface.openBox('taskOrder')).thenAnswer((_) async => mockHiveBox);
+  when(mockHiveInterface.openBox('counter')).thenAnswer((_) async => mockHiveBox);
 
-  //when(mockHiveInterface.openBox('taskList')).thenAnswer((realInvocation) async => );
-  //when(mockHiveInterface.openBox('taskOrder')).thenAnswer((realInvocation) async => taskOrderBox);
-  //when(mockHiveInterface.openBox('counter')).thenAnswer((realInvocation) async => counterBox);
 
   Box taskListBox = await mockHiveInterface.openBox('taskList');
   Box taskOrderBox = await mockHiveInterface.openBox('taskOrder');
   Box counterBox = await mockHiveInterface.openBox('counter');
+
+  MockdatabaseProvider mockDBprovider = MockdatabaseProvider(
+      taskListBox: taskListBox,
+      taskOrderBox: taskOrderBox,
+      counterBox: counterBox
+  );
+
+
+
+  List<taskTile> taskList = [];
+
+  when(mockDBprovider.getTaskList()).thenReturn(taskList);
+  when(mockDBprovider.getCount()).thenReturn(0);
+
 
   testWidgets("go to create task page", (WidgetTester tester) async {
 
@@ -90,11 +105,8 @@ void main() async {
         MaterialApp(
           home:MultiProvider(
             providers: [
-              ListenableProvider<MockdatabaseProvider>(create: (context) =>
-                  MockdatabaseProvider(
-                      taskListBox: taskListBox,
-                      taskOrderBox: taskOrderBox,
-                      counterBox: counterBox)),
+              ListenableProvider<MockdatabaseProvider>(create:
+                  (context) => mockDBprovider),
             ],
             child:MaterialApp.router(
               title: 'task app',

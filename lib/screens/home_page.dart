@@ -13,8 +13,6 @@ class _MyHomePageState extends State<MyHomePage> {
 
   TextEditingController _controller = TextEditingController();
 
-  final taskListBox = Hive.box('taskList');
-
   var taskDB;
   var task_counter;
   var taskItems;
@@ -57,7 +55,6 @@ class _MyHomePageState extends State<MyHomePage> {
   }
 
 
-
   @override
   Widget build(BuildContext context) {
 
@@ -78,12 +75,10 @@ class _MyHomePageState extends State<MyHomePage> {
         ),
 
 
-        //building list using taskOrdering provider.
         body: Column(
           children: [
 
             Consumer<databaseProvider>(builder: (context, provider, listTile) {
-              //DO I put consumer inside future builder?
               if (taskItems == null){
                 return  const SizedBox(
                   width: 200.0,
