@@ -6,9 +6,15 @@ import '../models/taskTile.dart';
 class databaseProvider extends ChangeNotifier {
 
   //reference to DB boxes opened in main
-  final taskListBox = Hive.box('taskList');
-  final taskOrderBox = Hive.box('taskOrder');
-  final counterBox = Hive.box('counter');
+  Box taskListBox;  //Hive.box('taskList');
+  Box taskOrderBox;  //Hive.box('taskOrder');
+  Box counterBox;  //Hive.box('counter');
+
+  databaseProvider({
+    required this.taskListBox,
+    required this.taskOrderBox,
+    required this.counterBox,
+  });
 
   List<taskTile> _taskList = [];
 

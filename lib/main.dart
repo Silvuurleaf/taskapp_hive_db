@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:hive_flutter/adapters.dart';
 import 'package:provider/provider.dart';
+
 import 'package:taskapp_hive_db/provider/hive_db_provider.dart';
 import 'package:taskapp_hive_db/screens/home_page.dart';
 import 'package:taskapp_hive_db/screens/taskDetailsScreen.dart';
@@ -29,7 +30,12 @@ Future<void> main() async{
   runApp(
       MultiProvider(
         providers: [
-          ListenableProvider<databaseProvider>(create: (context) => databaseProvider()),
+          ListenableProvider<databaseProvider>(create: (context) =>
+              databaseProvider(
+                  taskListBox: taskListBox,
+                  taskOrderBox: taskOrderBox,
+                  counterBox: counterBox)
+          ),
         ],
         child: const MyApp(),
       )

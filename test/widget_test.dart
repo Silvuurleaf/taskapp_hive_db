@@ -8,13 +8,18 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
+
+
 import 'package:hive/hive.dart';
 import 'package:hive_flutter/adapters.dart';
+import 'package:hive_flutter/hive_flutter.dart';
+
 import 'package:mockito/annotations.dart';
 import 'package:mockito/mockito.dart';
 import 'package:provider/provider.dart';
 
 import 'package:taskapp_hive_db/main.dart';
+
 import 'package:taskapp_hive_db/models/taskTile.dart';
 import 'package:taskapp_hive_db/provider/hive_db_provider.dart';
 import 'package:taskapp_hive_db/screens/home_page.dart';
@@ -24,40 +29,34 @@ import 'package:taskapp_hive_db/screens/taskForm.dart';
 import 'widget_test.mocks.dart';
 
 @GenerateMocks(
-  [],
+  [HiveInterface, Box],
   customMocks: [
     MockSpec<NavigatorObserver>(
       returnNullOnMissingStub: true,
     ),
     MockSpec<databaseProvider>(),
-    MockSpec<HiveInterface>(),
   ],
 )
 
 
 
 void main() async {
+  MockHiveInterface mockHiveInterface = MockHiveInterface();
 
-  final hiveMock = MockHiveInterface();
+  //Making a mock that still uses hive then arent I still using an actual database?
 
+  //when(mockHiveInterface.openBox('taskList')).thenAnswer((realInvocation) async => );
+  //when(mockHiveInterface.openBox('taskOrder')).thenAnswer((realInvocation) async => taskOrderBox);
+  //when(mockHiveInterface.openBox('counter')).thenAnswer((realInvocation) async => counterBox);
 
-  setUp(() async {
-
-    Box taskListBox = await hiveMock.openBox('taskList');
-    Box taskOrderBox = await hiveMock.openBox('taskOrder');
-    Box counterBox = await hiveMock.openBox('counter');
-
-  });
-
+  Box taskListBox = await mockHiveInterface.openBox('taskList');
+  Box taskOrderBox = await mockHiveInterface.openBox('taskOrder');
+  Box counterBox = await mockHiveInterface.openBox('counter');
 
   testWidgets("go to create task page", (WidgetTester tester) async {
 
 
     final observerMock = MockNavigatorObserver();
-    final databaseProviderMock = MockdatabaseProvider();
-
-
-
 
     final _router = GoRouter(
         initialLocation: '/',
@@ -91,7 +90,11 @@ void main() async {
         MaterialApp(
           home:MultiProvider(
             providers: [
-              ListenableProvider<MockdatabaseProvider>(create: (context) => MockdatabaseProvider()),
+              ListenableProvider<MockdatabaseProvider>(create: (context) =>
+                  MockdatabaseProvider(
+                      taskListBox: taskListBox,
+                      taskOrderBox: taskOrderBox,
+                      counterBox: counterBox)),
             ],
             child:MaterialApp.router(
               title: 'task app',
