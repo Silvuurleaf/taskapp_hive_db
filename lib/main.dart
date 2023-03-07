@@ -1,13 +1,19 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:hive_flutter/adapters.dart';
 import 'package:provider/provider.dart';
+import 'package:taskapp_hive_db/models/taskUser.dart';
 
 import 'package:taskapp_hive_db/provider/hive_db_provider.dart';
+import 'package:taskapp_hive_db/screens/auth_wrapper.dart';
 import 'package:taskapp_hive_db/screens/home_page.dart';
 import 'package:taskapp_hive_db/screens/taskDetailsScreen.dart';
 import 'package:taskapp_hive_db/screens/taskForm.dart';
 import 'package:taskapp_hive_db/screens/taskSelectionScreen.dart';
+import 'package:taskapp_hive_db/services/auth.dart';
+import 'package:taskapp_hive_db/services/firebase_DB.dart';
 
 import 'models/taskTile.dart';
 
@@ -15,8 +21,12 @@ import 'models/taskTile.dart';
 late Box taskListBox;
 late Box taskOrderBox;
 late Box counterBox;
+late Box firebaseUidBox;
 
 Future<void> main() async{
+
+  WidgetsFlutterBinding.ensureInitialized();
+  await Firebase.initializeApp();
 
   //initialize hive offline storage
   await Hive.initFlutter();
@@ -26,16 +36,25 @@ Future<void> main() async{
   taskListBox = await Hive.openBox('taskList');
   taskOrderBox = await Hive.openBox('taskOrder');
   counterBox = await Hive.openBox('counter');
+  firebaseUidBox = await Hive.openBox('firebase_uid');
 
   runApp(
       MultiProvider(
         providers: [
+
+          StreamProvider<taskUser?>.value(
+              value: AuthService().user, initialData: null
+          ),
+          //StreamProvider
           ListenableProvider<databaseProvider>(create: (context) =>
               databaseProvider(
-                  taskListBox: taskListBox,
-                  taskOrderBox: taskOrderBox,
-                  counterBox: counterBox)
+                taskListBox: taskListBox,
+                taskOrderBox: taskOrderBox,
+                counterBox: counterBox,
+                firebaseUidBox: firebaseUidBox,
+              )
           ),
+
         ],
         child: const MyApp(),
       )
@@ -45,8 +64,14 @@ Future<void> main() async{
 final _router = GoRouter(
     initialLocation: '/',
     routes:[
+
+      GoRoute(path:'/',
+        builder: (context, state) => const auth_wrapper(),
+      ),
+
+
       GoRoute(
-        path:'/',
+        path:'/home',
         builder: (context, state) => MyHomePage(),
         routes: [
           GoRoute(

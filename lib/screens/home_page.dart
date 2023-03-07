@@ -1,8 +1,12 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:hive/hive.dart';
 import 'package:provider/provider.dart';
+import 'package:taskapp_hive_db/services/auth.dart';
 import '../provider/hive_db_provider.dart';
+import '../services/firebase_DB.dart';
+import '../widgets/firebase_tasklist.dart';
 
 class MyHomePage extends StatefulWidget {
   @override
@@ -10,6 +14,8 @@ class MyHomePage extends StatefulWidget {
 }
 
 class _MyHomePageState extends State<MyHomePage> {
+
+  final AuthService _authService = AuthService();
 
   TextEditingController _controller = TextEditingController();
 
@@ -45,6 +51,8 @@ class _MyHomePageState extends State<MyHomePage> {
     taskItems = taskDB.getTaskList();
     //reference to number of tasks
     task_counter = taskDB.getCount();
+
+
   }
 
   @override
@@ -60,7 +68,16 @@ class _MyHomePageState extends State<MyHomePage> {
 
     return Scaffold(
         appBar: AppBar(
-            title: const Text('Tasks')
+            title: const Text('Tasks'),
+            actions: <Widget>[
+                IconButton(onPressed: () async{
+                  await _authService.signOut();
+                },
+                  icon: const Icon(Icons.logout_outlined),
+              )
+
+            ],
+
         ),
 
         floatingActionButton: FloatingActionButton(
@@ -75,28 +92,38 @@ class _MyHomePageState extends State<MyHomePage> {
         ),
 
 
-        body: Column(
-          children: [
+        body: StreamProvider<QuerySnapshot?>.value(
+          value: FB_databaseService().tasksFromFirebase,
+          initialData: null,
+          child: Column(
+            children: [
 
-            Consumer<databaseProvider>(builder: (context, provider, listTile) {
-              if (taskItems == null){
-                return  const SizedBox(
-                  width: 200.0,
-                  height: 300.0,
-                );
-              }
-              else {
-                return Expanded(
-                  child: ListView.builder(
-                    key: const Key('task_list'),
-                    itemCount: taskItems.length,
-                    itemBuilder: buildList,
-                  ),
-                );
-              }
-            }),
-          ],
-        ));
+              Consumer<databaseProvider>(builder: (context, provider, listTile) {
+                if (taskItems == null){
+                  return  const SizedBox(
+                    width: 200.0,
+                    height: 300.0,
+                  );
+                }
+                else {
+                  return Expanded(
+                    child: ListView.builder(
+                      key: const Key('task_list'),
+                      itemCount: taskItems.length,
+                      itemBuilder: buildList,
+                    ),
+                  );
+                }
+              }),
+
+              firebaseTaskList(),
+
+              //Combine the fb database objects with locally stored objects
+
+            ],
+          ),
+        )
+    );
   }
 
   Widget buildList(BuildContext context, int index) {

@@ -1,4 +1,3 @@
-
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:image_picker/image_picker.dart';
@@ -6,13 +5,11 @@ import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 import 'dart:io';
 
-
 import '../models/taskTile.dart';
 import '../provider/hive_db_provider.dart';
 import '../widgets/task_image.dart';
 
 class taskDetailScreen extends StatefulWidget {
-
   var taskId;
   var blocker_id;
 
@@ -135,19 +132,22 @@ class _taskDetailScreenState extends State<taskDetailScreen> {
 
                     //TODO logic to remove task item and update the order of the list
 
+                    //taskTile oldTask = taskItems.getById(taskId.toString());
+                    var findById = (taskTile) => taskTile.id == taskId.toString();
+                    var result = taskItems.where(findById);
+                    taskTile oldTask = result.isNotEmpty ? result.first : null;
+
+                    bool? oldTask_personal = oldTask.personal;
+
                     taskTile newTask = taskTile(title:taskTitle,
                         description:description,
                         status:status,
                         datetime:formattedDate,
                         id:taskId.toString(),
+                        personal: oldTask_personal,
                         imagePath: imageFilePath
                     );
 
-
-                    //taskTile oldTask = taskItems.getById(taskId.toString());
-                    var findById = (taskTile) => taskTile.id == taskId.toString();
-                    var result = taskItems.where(findById);
-                    taskTile oldTask = result.isNotEmpty ? result.first : null;
 
                     //remove the task from the ordering
                     //taskOrder.removeWhere((item) => item.id == oldTask.id.toString());

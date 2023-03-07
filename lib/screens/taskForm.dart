@@ -1,6 +1,7 @@
 import 'dart:io';
 import 'dart:typed_data';
 
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:image_picker/image_picker.dart';
@@ -9,7 +10,9 @@ import 'package:provider/provider.dart';
 
 import '../models/taskTile.dart';
 import '../provider/hive_db_provider.dart';
+import '../services/firebase_DB.dart';
 import '../widgets/task_image.dart';
+import '../widgets/toggle_button.dart';
 
 class TaskForm extends StatefulWidget {
 
@@ -50,15 +53,20 @@ class _TaskForm extends State<TaskForm> {
   var imageFilePath = '';
   late final Function imageCallBackFunction;
 
+  bool personal = true;
+  late final Function saveLocationCallBackFunction;
+
+  late final firebaseDB;
 
   @override
   void initState() {
     super.initState();
 
-
     //maybe be able to deprecate other provider
     taskDB = Provider.of<databaseProvider>(context, listen: false);
     taskItems = taskDB.getTaskList();
+
+    firebaseDB = FB_databaseService(uid:taskDB.getFirebaseUid());
 
     titleController.addListener(() => setState(() {}));
   }
@@ -71,6 +79,12 @@ class _TaskForm extends State<TaskForm> {
       var img = await image.pickImage(source: ImageSource.gallery);
       setState(() {
         imageFilePath = File(img!.path).path;
+      });
+    }
+
+    getSaveLocation(bool isPersonal) {
+      setState(() {
+        personal = isPersonal;
       });
     }
 
@@ -88,6 +102,8 @@ class _TaskForm extends State<TaskForm> {
               const SizedBox( height: 12),
               buildDesc(),
               const SizedBox(height: 24),
+
+              //status dropdown
               SizedBox(
                 width: 120,
                 child:statusDropDown(),
@@ -97,32 +113,35 @@ class _TaskForm extends State<TaskForm> {
               buildDateTime(),
               const SizedBox(height: 24),
 
-
+              //toggle button submission
+              ToggleButton(callbackFunction: getSaveLocation,),
+              const SizedBox(height: 24),
+              //submit task button
               ElevatedButton(
                   key: const ValueKey('submit_task'),
                   onPressed: () async {
                     taskTitle = titleController.text;
                     description = descController.text;
 
-                    //Map<String, String?> task_info = {'title': taskTitle, 'description': description, 'status': status};
                     DateTime now = DateTime.now();
                     String formattedDate = DateFormat('kk:mm:ss \n EEE d MMM').format(now);
 
                     String taskId = taskDB.getCount().toString();
                     taskTile newTask;
 
-                    print("creating task imagepath: $imageFilePath");
-                    print("CURR TASK ID: $taskId");
+                    //print("creating task imagepath: $imageFilePath");
+                    //print("CURR TASK ID: $taskId");
 
                     if(imageFilePath == null || imageFilePath == ""){
-
                       print("image not detected");
                       newTask = taskTile(
                           title:taskTitle,
                           description:description,
                           status:status,
                           datetime:formattedDate,
-                          id:taskId);
+                          id:taskId,
+                          personal: personal,
+                      );
                     }
                     else{
 
@@ -133,20 +152,27 @@ class _TaskForm extends State<TaskForm> {
                           status:status,
                           datetime:formattedDate,
                           id:taskId,
+                          personal: personal,
                           imagePath: imageFilePath);
                     }
 
                     //TODO task should be added at the top of the list need a push method
-                    taskItems.add(newTask);
 
-                    //update task counter
-                    taskDB.increment();
-
-                    taskDB.changeTaskList(taskItems);
-                    await taskDB.updateData();
+                    if(personal == true){
+                      //Section runs when we add a task locally
+                      taskItems.add(newTask);
+                      //update task counter
+                      taskDB.increment();
+                      taskDB.changeTaskList(taskItems);
+                      await taskDB.updateData();
+                    }
+                    else{
+                      //section runs when we toggle shared
+                      //call firebase DB and add task to collection
+                      await firebaseDB.updateTaskData(taskDB.getFirebaseUid(), newTask);
+                    }
 
                     //test if data was updated here?
-
                     context.push('/');
 
                   },

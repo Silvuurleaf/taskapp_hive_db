@@ -17,21 +17,24 @@ class taskTile {
   String? id;
 
   @HiveField(5)
+  bool? personal;
+
+  @HiveField(6)
   String? imagePath;
 
   //ValueNotifier isVisible = ValueNotifier(true);
-  @HiveField(6)
+  @HiveField(7)
   bool isVisible = true;
 
-  @HiveField(7)
-  List<taskTile> blockedBy;
   @HiveField(8)
-  List<taskTile> parentTasks;
+  List<taskTile> blockedBy;
   @HiveField(9)
-  List<taskTile> minorTasks;
+  List<taskTile> parentTasks;
   @HiveField(10)
-  List<taskTile> urgentTasks;
+  List<taskTile> minorTasks;
   @HiveField(11)
+  List<taskTile> urgentTasks;
+  @HiveField(12)
   List<taskTile> miscTasks;
 
 
@@ -41,6 +44,7 @@ class taskTile {
     required this.status,
     required this.datetime,
     required this.id,
+    required this.personal,
 
     //need ?? []
     this.imagePath,
@@ -57,6 +61,7 @@ class taskTile {
         urgentTasks = parentTasks ?? [],
         miscTasks = miscTasks ?? [];
 
+
   void updateTask(String title, String description,
       String status, String datetime,
       String id)
@@ -67,4 +72,5 @@ class taskTile {
     this.datetime = datetime;
     this.id = id;
   }
+
 }
