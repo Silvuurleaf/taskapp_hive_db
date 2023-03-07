@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:hive/hive.dart';
 import 'package:provider/provider.dart';
+import 'package:taskapp_hive_db/models/taskTile.dart';
 import 'package:taskapp_hive_db/services/auth.dart';
 import '../provider/hive_db_provider.dart';
 import '../services/firebase_DB.dart';
@@ -92,9 +93,9 @@ class _MyHomePageState extends State<MyHomePage> {
         ),
 
 
-        body: StreamProvider<QuerySnapshot?>.value(
+        body: StreamProvider<List<taskTile>>.value(
           value: FB_databaseService().tasksFromFirebase,
-          initialData: null,
+          initialData: [],
           child: Column(
             children: [
 

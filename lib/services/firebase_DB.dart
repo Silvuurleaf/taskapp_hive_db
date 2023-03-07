@@ -75,11 +75,33 @@ class FB_databaseService{
 
   }
 
-   Stream<QuerySnapshot> get tasksFromFirebase {
-    //'_MapStream<QuerySnapshotPlatform, QuerySnapshot<Map<String, dynamic>>>'
-    var snapshots = userCollection.doc(uid).collection('user_tasks').snapshots();
+  Stream<List<taskTile>> get tasksFromFirebase {
 
-    return snapshots;
+    var data = userCollection.doc(uid).collection('user_tasks').snapshots().map(_tasksFromSnapshot);
+
+    data.forEach((list) {
+      print("HERES THE LIST: $list");
+      list.forEach((task) {
+        print("task");
+        print(task.title);
+      });
+
+    });
+
+    return data;
+  }
+
+  List<taskTile> _tasksFromSnapshot(QuerySnapshot snapshot){
+    return snapshot.docs.map((doc) {
+      return taskTile(
+          title: doc.data().toString().contains('title') ? doc.get('title') : '',
+          description: doc.data().toString().contains('description') ? doc.get('description') : '',
+          status: doc.data().toString().contains('status') ? doc.get('status') : '',
+          datetime: doc.data().toString().contains('datetime') ? doc.get('datetime') : '',
+          id: doc.data().toString().contains('id') ? doc.get('id') : '',
+          personal: false,
+      );
+    }).toList();
   }
 
 }

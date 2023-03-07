@@ -16,20 +16,15 @@ class _firebaseTaskListState extends State<firebaseTaskList> {
   @override
   Widget build(BuildContext context) {
 
-    final firebase_snapshot = Provider.of<QuerySnapshot>(context);
+    final firebaseTaskList = Provider.of<List<taskTile>>(context);
     print("Creating firebase task list below is FB data");
 
+    print(firebaseTaskList);
+    firebaseTaskList.forEach((task) {
+      print(task.title);
+    });
 
-/*    print("PRINTING THE DATA");
-    if(firebase_snapshot != null){
-      //var firebaseTaskList =
-      firebase_snapshot.docs.map(
-          (element){
-            print(element.data());
-          }
-      );
-    }*/
-
+    //return a list view builder of all of the tasks from DB
     return Container();
   }
 }

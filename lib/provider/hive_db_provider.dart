@@ -86,6 +86,8 @@ class databaseProvider extends ChangeNotifier {
     firebaseUidBox.put(0, _firebase_uid);
 
     print("UPDATED FIREBASE UID");
+    print(uid);
+
     notifyListeners();
 
     //where to call this and do i need to call on after build in the authentication section?
