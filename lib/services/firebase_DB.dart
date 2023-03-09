@@ -75,18 +75,30 @@ class FB_databaseService{
 
   }
 
-  Stream<List<taskTile>> get tasksFromFirebase {
+  Future<QuerySnapshot<Map<String, dynamic>>> get tasksFromFirebase async {
 
-    var data = userCollection.doc(uid).collection('user_tasks').snapshots().map(_tasksFromSnapshot);
+    //Future<Stream<List<taskTile>>>
+    //.stream????
 
-    data.forEach((list) {
+    //normal provider -> one shot snapshot return future
+
+    //just a future
+    var data = await userCollection.doc(uid).collection('user_tasks').get();
+
+    //data = data.map(_tasksFromSnapshot);
+
+    //var data = userCollection.doc(uid).collection('user_tasks').snapshots().map(_tasksFromSnapshot);
+
+
+
+/*    data.forEach((list) {
       print("HERES THE LIST: $list");
       list.forEach((task) {
         print("task");
         print(task.title);
       });
 
-    });
+    });*/
 
     return data;
   }
