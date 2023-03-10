@@ -140,10 +140,10 @@ class _taskSelectionScreenSharedState extends State<taskSelectionScreenShared> {
     //get the task tile for current task and check its subsequent lists and add the related task
     if (blocker.hasMatch(routeLocation)){
 
-      var task = await firebaseDB.getTaskByDocId(widget.headTaskId);
+      taskTile task = await firebaseDB.getTaskByDocId(widget.headTaskId);
       task.blockedBy.add(relatedTask);
 
-      await firebaseDB.updateTask(task);
+      firebaseDB.updateTask(task);
 
     }
     else if(hasParent.hasMatch(routeLocation)){
