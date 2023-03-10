@@ -66,7 +66,7 @@ class _TaskForm extends State<TaskForm> {
     taskDB = Provider.of<databaseProvider>(context, listen: false);
     taskItems = taskDB.getTaskList();
 
-    firebaseDB = FB_databaseService(uid:taskDB.getFirebaseUid());
+    firebaseDB = FB_databaseService();
 
     titleController.addListener(() => setState(() {}));
   }
@@ -127,25 +127,50 @@ class _TaskForm extends State<TaskForm> {
                     String formattedDate = DateFormat('kk:mm:ss \n EEE d MMM').format(now);
 
                     String taskId = taskDB.getCount().toString();
+
+                    print("THE COUNT OF TASK ITEMS IN LOCAL: $taskId");
+
+
                     taskTile newTask;
 
-                    //print("creating task imagepath: $imageFilePath");
-                    //print("CURR TASK ID: $taskId");
-
-                    if(imageFilePath == null || imageFilePath == ""){
-                      print("image not detected");
-                      newTask = taskTile(
+                    if(personal){
+                      if(imageFilePath == null || imageFilePath == ""){
+                        print("image not detected");
+                        newTask = taskTile(
                           title:taskTitle,
                           description:description,
                           status:status,
                           datetime:formattedDate,
                           id:taskId,
                           personal: personal,
-                      );
-                    }
-                    else{
+                        );
+                      }
+                      else{
 
-                      print("image detected");
+                        print("image detected");
+                        newTask = taskTile(
+                            title:taskTitle,
+                            description:description,
+                            status:status,
+                            datetime:formattedDate,
+                            id:taskId,
+                            personal: personal,
+                            imagePath: imageFilePath);
+                      }
+
+                      taskItems.add(newTask);
+                      //update task counter
+
+                      var ct = taskDB.getCount();
+                      print("CURRENT TASK COUNTER: $ct");
+
+                      taskDB.increment();
+                      taskDB.changeTaskList(taskItems);
+                      await taskDB.updateData();
+
+                    }else{
+                      //shared task
+
                       newTask = taskTile(
                           title:taskTitle,
                           description:description,
@@ -154,23 +179,10 @@ class _TaskForm extends State<TaskForm> {
                           id:taskId,
                           personal: personal,
                           imagePath: imageFilePath);
+
+                      await firebaseDB.addTaskData(newTask);
                     }
 
-                    //TODO task should be added at the top of the list need a push method
-
-                    if(personal == true){
-                      //Section runs when we add a task locally
-                      taskItems.add(newTask);
-                      //update task counter
-                      taskDB.increment();
-                      taskDB.changeTaskList(taskItems);
-                      await taskDB.updateData();
-                    }
-                    else{
-                      //section runs when we toggle shared
-                      //call firebase DB and add task to collection
-                      await firebaseDB.updateTaskData(taskDB.getFirebaseUid(), newTask);
-                    }
 
                     //test if data was updated here?
                     context.push('/');

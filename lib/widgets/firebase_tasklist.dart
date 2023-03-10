@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../models/taskTile.dart';
+import '../services/firebase_DB.dart';
 
 class firebaseTaskList extends StatefulWidget {
   const firebaseTaskList({Key? key}) : super(key: key);
@@ -13,18 +14,20 @@ class firebaseTaskList extends StatefulWidget {
 
 class _firebaseTaskListState extends State<firebaseTaskList> {
 
+  final firebaseReference = FB_databaseService();
+
   @override
   Widget build(BuildContext context) {
 
-    final firebaseTaskList = Provider.of<List<taskTile>>(context);
+/*    final firebaseTaskList = Provider.of<List<taskTile>>(context);
     print("Creating firebase task list below is FB data");
 
     print(firebaseTaskList);
     firebaseTaskList.forEach((task) {
       print(task.title);
-    });
+    });*/
 
-    //return a list view builder of all of the tasks from DB
+
     return Container();
   }
 }

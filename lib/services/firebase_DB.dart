@@ -1,28 +1,17 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'dart:io';
-
 import 'package:taskapp_hive_db/models/taskUser.dart';
-
+import 'package:uuid/uuid.dart';
 import '../models/taskTile.dart';
 
 class FB_databaseService{
 
-  final String? uid;
-  FB_databaseService({this.uid});
+  var uuid = const Uuid();
 
-  final CollectionReference userCollection = FirebaseFirestore.instance.collection('users');
+  FB_databaseService();
 
-  Future<void> configureUser() async {
-    //builds a document w/ uid
-    //userCollection.doc(uid);
+  final CollectionReference taskCollection = FirebaseFirestore.instance.collection('tasks');
 
-    //in document user has a subcollection of tasks
-    CollectionReference userTasks = userCollection.doc(uid).collection('user_tasks');
-    //every new task will be a new document within user_tasks subcollection
-    //using the taskId
-  }
-
-  Future updateTaskData(String uid, taskTile taskObject) async {
+  Future addTaskData(taskTile taskObject) async {
 
     //opening User collections and creating a new doc w/ uid
     //new doc will have a sub collection of user tasks
@@ -58,9 +47,7 @@ class FB_databaseService{
     }
 
 
-    return await userCollection.doc(uid).collection('user_tasks').doc(taskObject.id).set({
-      'userId': uid,
-      'taskId': taskObject.id,
+    return await taskCollection.add({
       'title': taskObject.title,
       'description':taskObject.description,
       'status': taskObject.status,
@@ -73,35 +60,62 @@ class FB_databaseService{
       'miscTasks': miscTasks_ids,
     });
 
+
+/*    return await taskCollection.doc(id).set({
+      'taskId': id,
+      'title': taskObject.title,
+      'description':taskObject.description,
+      'status': taskObject.status,
+      'images': taskObject.imagePath,
+      'shared': true,
+      'blockerTasks': blockerTask_ids,
+      'parentTasks':parentTasks_ids,
+      'minorTasks': minorTasks_ids,
+      'urgentTasks': urgentTasks_ids,
+      'miscTasks': miscTasks_ids,
+    });*/
+
+  }
+  Future updateTask(taskTile taskObject) async {
+
+    return await taskCollection.doc(taskObject.id).set({
+      'taskId': taskObject.id,
+      'title': taskObject.title,
+      'description':taskObject.description,
+      'status': taskObject.status,
+      'images': taskObject.imagePath,
+      'shared': true,
+      'blockerTasks': taskObject.blockedBy ?? [],
+      'parentTasks':taskObject.parentTasks ?? [],
+      'minorTasks': taskObject.minorTasks ?? [],
+      'urgentTasks': taskObject.urgentTasks ?? [],
+      'miscTasks': taskObject.miscTasks ?? [],
+    });
+
   }
 
-  Future<QuerySnapshot<Map<String, dynamic>>> get tasksFromFirebase async {
+  Future<taskTile?> getTaskByDocId(String docId) async {
+    var snapshot = await taskCollection.get();
 
-    //Future<Stream<List<taskTile>>>
-    //.stream????
+    var data = _tasksFromSnapshot(snapshot);
+    for (var tile in data) {
+      if(tile.id == docId){
+        return tile;
+      }
+    }
+    return null;
 
-    //normal provider -> one shot snapshot return future
-
-    //just a future
-    var data = await userCollection.doc(uid).collection('user_tasks').get();
-
-    //data = data.map(_tasksFromSnapshot);
-
-    //var data = userCollection.doc(uid).collection('user_tasks').snapshots().map(_tasksFromSnapshot);
-
+  }
 
 
-/*    data.forEach((list) {
-      print("HERES THE LIST: $list");
-      list.forEach((task) {
-        print("task");
-        print(task.title);
-      });
-
-    });*/
+  Future<List<taskTile>>? firebaseSnapshot() async {
+    var snapshot = await taskCollection.get();
+    var data = _tasksFromSnapshot(snapshot);
+    //data.forEach((taskTile tile) => print(tile.title));
 
     return data;
   }
+
 
   List<taskTile> _tasksFromSnapshot(QuerySnapshot snapshot){
     return snapshot.docs.map((doc) {
@@ -110,10 +124,14 @@ class FB_databaseService{
           description: doc.data().toString().contains('description') ? doc.get('description') : '',
           status: doc.data().toString().contains('status') ? doc.get('status') : '',
           datetime: doc.data().toString().contains('datetime') ? doc.get('datetime') : '',
-          id: doc.data().toString().contains('id') ? doc.get('id') : '',
+          id: doc.id.toString(),
           personal: false,
       );
     }).toList();
   }
 
+  Future<void> deleteTask(String taskId) async {
+    print("deleting task");
+    taskCollection.doc(taskId).delete();
+  }
 }

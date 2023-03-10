@@ -23,6 +23,7 @@ class _MyHomePageState extends State<MyHomePage> {
   var taskDB;
   var task_counter;
   var taskItems;
+  var firebaseDB;
 
   String? status = '';
   List<String> status_items = ['All', 'Open', 'In Progress', 'Completed'];
@@ -36,9 +37,11 @@ class _MyHomePageState extends State<MyHomePage> {
     WidgetsBinding.instance.addPostFrameCallback((_) => _onAfterBuild(context));
     _controller = TextEditingController();
 
+    firebaseDB = FB_databaseService();
+
   }
 
-  void _onAfterBuild(BuildContext context) {
+  void _onAfterBuild(BuildContext context) async{
     taskDB = Provider.of<databaseProvider>(context, listen: false);
 
     try{
@@ -53,6 +56,8 @@ class _MyHomePageState extends State<MyHomePage> {
     //reference to number of tasks
     task_counter = taskDB.getCount();
 
+    var firebaseTasks = await firebaseDB.firebaseSnapshot();
+    firebaseTasks.forEach((taskTile task) => print(task));
 
   }
 
@@ -93,15 +98,8 @@ class _MyHomePageState extends State<MyHomePage> {
         ),
 
 
-        /*        body: StreamProvider<List<taskTile>>.value(
-          value: FB_databaseService().tasksFromFirebase,
-          initialData: [],*/
 
-
-        body: StreamProvider<List<taskTile>>.value(
-          value: FB_databaseService().tasksFromFirebase,
-          initialData: [],
-          child: Column(
+        body: Column(
             children: [
 
               Consumer<databaseProvider>(builder: (context, provider, listTile) {
@@ -122,15 +120,83 @@ class _MyHomePageState extends State<MyHomePage> {
                 }
               }),
 
-              firebaseTaskList(),
+              const Text("Shared Tasks"),
+              Expanded(
+                child: Column(
+                  children: [
+                    FutureBuilder(
+                        future: firebaseDB.firebaseSnapshot(),
+                        builder: (context, AsyncSnapshot<List<taskTile>> snapshot){
+                          if(snapshot.hasData){
+                            if(snapshot.connectionState == ConnectionState.waiting){
+                              return const Center(child: CircularProgressIndicator());
+                            }
+                            else{
+                              return Expanded(
+                                  child: ListView.builder(
+                                    shrinkWrap: true,
+                                    key: const Key('task_list_firebase'),
+                                    itemCount: snapshot.data!.length,
+                                    itemBuilder: (context, idx){
+                                      return SizedBox(
+                                        child: Dismissible(
+                                          key: Key(snapshot.data![idx].id.toString()),
 
-              //Combine the fb database objects with locally stored objects
+                                          background: trashBackground(),
+                                          onDismissed: (direction) async{
+
+                                            //TODO not calling delete on Firebase
+
+                                            await firebaseDB.deleteTask(snapshot.data![idx].id.toString());
+                                          },
+
+                                          child: InkWell(
+                                            onTap: () {
+
+                                              var Currroute = ModalRoute.of(context)?.settings.name;
+
+                                              print("CURRENT ROUTE:$Currroute");
+
+                                              //print(snapshot.data![idx].description ?? 'no id??');
+
+                                              String clickedTaskTileId = snapshot.data![idx].id.toString();
+                                              //on click edit/opening detail view
+                                              //navigating back to the same page
+                                              print("SHARED TASK ID $clickedTaskTileId");
+                                              context.push('/sharedTasks/$clickedTaskTileId');
+                                            },
+
+                                            child: ListTile(
+                                              title: Text(snapshot.data![idx].title ?? ''),
+                                              subtitle: Text('$idx'),
+                                            ),
+                                          ),
+                                        ),
+                                      );
+
+                                    }
+                                  ),
+                                );
+                            }
+                          }
+                          else if (snapshot.hasError){
+                            return const Text("error occurred");
+                          }
+                          else {
+                            return const Center(child: CircularProgressIndicator());
+                          }
+                        })
+                  ],
+                ),
+              ),
 
             ],
           ),
-        )
     );
   }
+
+
+
 
   Widget buildList(BuildContext context, int index) {
     return Container(
@@ -170,13 +236,12 @@ class _MyHomePageState extends State<MyHomePage> {
                 child: InkWell(
                   onTap: () {
 
-                    //TODO index is based on index of taskOrder_provider. Need indx to be task ID
-
-                    //TODO push based on their taskId, not index what will this break
-
                     String clickedTaskTileId = taskItems[index].id.toString();
-
                     //on click edit/opening detail view
+
+                    var Currroute = ModalRoute.of(context)?.settings.name;
+                    print("CURRENT ROUTE:$Currroute");
+
                     context.push('/tasks/$clickedTaskTileId');
 
                   },
@@ -225,7 +290,8 @@ class _MyHomePageState extends State<MyHomePage> {
             String clickedTaskTileId = taskItems[index].id.toString();
 
             //on click edit/opening detail view
-            context.push('/tasks/$clickedTaskTileId');
+
+            context.push('/$clickedTaskTileId');
 
           },
           child:ListTile(
